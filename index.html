@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>칭찬 일름보 찾기</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --purple-deep: #5B2D8E;
+    --purple-main: #7B3FC4;
+    --purple-mid: #9B59DA;
+    --purple-light: #C39EEC;
+    --purple-pale: #EDE0FF;
+    --purple-bg: #F7F2FF;
+    --white: #ffffff;
+    --gray-1: #F4F4F6;
+    --gray-2: #E8E8EE;
+    --gray-3: #BDBDCC;
+    --gray-4: #888899;
+    --text-dark: #1E1230;
+    --text-mid: #4A3D6A;
+    --shadow-sm: 0 2px 8px rgba(91,45,142,0.10);
+    --shadow-md: 0 4px 20px rgba(91,45,142,0.16);
+    --shadow-lg: 0 8px 32px rgba(91,45,142,0.22);
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--purple-bg);
+    color: var(--text-dark);
+    min-height: 100vh;
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* ── Header ── */
+  .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--white);
+    border-bottom: 1.5px solid var(--purple-pale);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--shadow-sm);
+  }
+  .app-title {
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--purple-deep);
+    letter-spacing: -0.5px;
+  }
+  .menu-btn {
+    width: 40px; height: 40px;
+    border: none; background: var(--purple-pale);
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 5px;
+    transition: background 0.2s;
+  }
+  .menu-btn:active { background: var(--purple-light); }
+  .menu-btn span {
+    display: block; width: 18px; height: 2px;
+    background: var(--purple-deep); border-radius: 2px;
+  }
+
+  /* ── Tabs ── */
+  .tab-bar {
+    display: flex;
+    background: var(--white);
+    border-bottom: 1.5px solid var(--purple-pale);
+    position: sticky;
+    top: 69px;
+    z-index: 99;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 12px 4px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gray-3);
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    letter-spacing: -0.3px;
+  }
+  .tab-btn.active {
+    color: var(--purple-main);
+    border-bottom-color: var(--purple-main);
+  }
+
+  /* ── Content ── */
+  .tab-content { display: none; padding: 16px; }
+  .tab-content.active { display: block; }
+
+  /* ── Student Grid ── */
+  .student-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .student-btn {
+    background: var(--white);
+    border: 1.5px solid var(--gray-2);
+    border-radius: var(--radius-sm);
+    padding: 8px 4px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+  }
+  .student-btn .num {
+    display: block;
+    font-size: 10px;
+    color: var(--gray-3);
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .student-btn .name {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-dark);
+    letter-spacing: -0.3px;
+  }
+  .student-btn:active { transform: scale(0.95); }
+  .student-btn.selected-praiser {
+    background: var(--purple-main);
+    border-color: var(--purple-main);
+    box-shadow: 0 4px 16px rgba(123,63,196,0.35);
+  }
+  .student-btn.selected-praiser .num,
+  .student-btn.selected-praiser .name {
+    color: var(--white);
+  }
+  .student-btn.selected-receiver {
+    background: var(--purple-pale);
+    border-color: var(--purple-light);
+  }
+  .student-btn.selected-receiver .name {
+    color: var(--purple-deep);
+  }
+
+  /* ── Praise Form ── */
+  .praise-form {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 16px;
+  }
+  .praise-form h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--purple-mid);
+    margin-bottom: 10px;
+    letter-spacing: -0.2px;
+  }
+  .form-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .form-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gray-4);
+    min-width: 52px;
+  }
+  .form-value {
+    font-size: 14px;
+    font-weight: 900;
+    color: var(--purple-deep);
+    background: var(--purple-pale);
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+  .praise-input {
+    width: 100%;
+    border: 1.5px solid var(--gray-2);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 400;
+    color: var(--text-dark);
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 10px;
+    background: var(--gray-1);
+  }
+  .praise-input:focus { border-color: var(--purple-light); background: var(--white); }
+  .submit-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--purple-main);
+    color: var(--white);
+    font-size: 15px;
+    font-weight: 900;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    letter-spacing: -0.3px;
+    transition: background 0.2s, transform 0.1s;
+    box-shadow: 0 4px 14px rgba(123,63,196,0.30);
+  }
+  .submit-btn:active { background: var(--purple-deep); transform: scale(0.98); }
+
+  /* ── Student Log (칭찬 기록 탭) ── */
+  .log-list { margin-top: 12px; }
+  .log-item {
+    background: var(--white);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    box-shadow: var(--shadow-sm);
+    border-left: 4px solid var(--purple-light);
+  }
+  .log-meta {
+    font-size: 12px;
+    color: var(--gray-4);
+    margin-bottom: 4px;
+  }
+  .log-meta strong { color: var(--purple-main); }
+  .log-body {
+    font-size: 14px;
+    color: var(--text-dark);
+    font-weight: 500;
+    line-height: 1.5;
+  }
+  .log-date {
+    font-size: 11px;
+    color: var(--gray-3);
+    margin-top: 4px;
+  }
+
+  /* ── Ranking ── */
+  .rank-list { margin-top: 4px; }
+  .rank-item {
+    background: var(--white);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--shadow-sm);
+  }
+  .rank-num {
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--gray-3);
+    min-width: 28px;
+    text-align: center;
+  }
+  .rank-num.top1 { color: #C9A227; }
+  .rank-num.top2 { color: #8E9BAE; }
+  .rank-num.top3 { color: #A0613A; }
+  .rank-info { flex: 1; }
+  .rank-name {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text-dark);
+  }
+  .rank-count {
+    font-size: 12px;
+    color: var(--gray-4);
+    margin-top: 1px;
+  }
+  .rank-badge {
+    background: var(--purple-pale);
+    color: var(--purple-main);
+    font-size: 14px;
+    font-weight: 900;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+
+  /* ── 칭찬 요정 sub-logs ── */
+  .fairy-item {
+    background: var(--white);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .fairy-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--purple-pale);
+  }
+  .fairy-header.no-border { border-bottom: none; }
+  .fairy-logs {
+    padding: 0 16px 12px;
+    display: none;
+  }
+  .fairy-logs.open { display: block; }
+  .fairy-log-row {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--gray-1);
+    font-size: 13px;
+    color: var(--text-dark);
+    line-height: 1.5;
+  }
+  .fairy-log-row:last-child { border-bottom: none; }
+  .fairy-log-by {
+    font-size: 11px;
+    color: var(--gray-4);
+    margin-top: 2px;
+  }
+
+  /* ── Sidebar (학생 명단 입력) ── */
+  .sidebar-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(30,18,48,0.45);
+    z-index: 200;
+  }
+  .sidebar-overlay.open { display: block; }
+  .sidebar {
+    position: fixed;
+    top: 0; right: -320px;
+    width: 300px; height: 100%;
+    background: var(--white);
+    z-index: 201;
+    padding: 24px 18px;
+    transition: right 0.3s cubic-bezier(.4,0,.2,1);
+    overflow-y: auto;
+    box-shadow: -4px 0 24px rgba(91,45,142,0.18);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .sidebar.open { right: 0; }
+  .sidebar h2 {
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--purple-deep);
+    margin-bottom: 4px;
+  }
+  .sidebar-desc {
+    font-size: 12px;
+    color: var(--gray-4);
+    line-height: 1.6;
+  }
+  .sidebar textarea {
+    width: 100%;
+    height: 180px;
+    border: 1.5px solid var(--gray-2);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    font-size: 13px;
+    font-family: 'Noto Sans KR', sans-serif;
+    resize: none;
+    outline: none;
+    color: var(--text-dark);
+    background: var(--gray-1);
+    transition: border-color 0.2s;
+  }
+  .sidebar textarea:focus { border-color: var(--purple-light); background: var(--white); }
+  .sidebar-btn {
+    padding: 11px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: all 0.15s;
+  }
+  .sidebar-btn.primary {
+    background: var(--purple-main);
+    color: var(--white);
+    box-shadow: 0 3px 12px rgba(123,63,196,0.28);
+  }
+  .sidebar-btn.primary:active { background: var(--purple-deep); }
+  .sidebar-btn.secondary {
+    background: var(--gray-1);
+    color: var(--gray-4);
+    border: 1.5px solid var(--gray-2);
+  }
+  .sidebar-btn.danger {
+    background: #FFF0F0;
+    color: #D93636;
+    border: 1.5px solid #FFCDD2;
+  }
+  .sidebar-btn.danger:active { background: #FFCDD2; }
+  .sidebar-divider {
+    height: 1px;
+    background: var(--gray-2);
+  }
+  .sidebar-btn.copy {
+    background: var(--purple-pale);
+    color: var(--purple-deep);
+    border: 1.5px solid var(--purple-light);
+  }
+
+  /* ── Empty state ── */
+  .empty-state {
+    text-align: center;
+    padding: 36px 16px;
+    color: var(--gray-3);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* ── Section title ── */
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gray-4);
+    margin-bottom: 8px;
+    letter-spacing: -0.2px;
+  }
+
+  /* ── 선택 안내 배너 ── */
+  .select-hint {
+    background: var(--purple-pale);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--purple-deep);
+    font-weight: 600;
+    margin-bottom: 12px;
+    letter-spacing: -0.2px;
+  }
+
+  /* ── Modal (confirm) ── */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(30,18,48,0.55);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 28px 22px 20px;
+    width: 88%;
+    max-width: 320px;
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+  }
+  .modal h3 {
+    font-size: 17px;
+    font-weight: 900;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+  }
+  .modal p {
+    font-size: 13px;
+    color: var(--gray-4);
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+  .modal-btns {
+    display: flex;
+    gap: 10px;
+  }
+  .modal-btns button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .modal-cancel { background: var(--gray-1); color: var(--gray-4); }
+  .modal-confirm { background: #D93636; color: var(--white); }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--purple-deep);
+    color: var(--white);
+    padding: 10px 22px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 700;
+    z-index: 999;
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1), opacity 0.3s;
+    opacity: 0;
+    white-space: nowrap;
+    box-shadow: var(--shadow-lg);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+  /* ── Receiver grid (2nd step) ── */
+  .step-label {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--purple-mid);
+    background: var(--purple-pale);
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    letter-spacing: 0.2px;
+  }
+
+  /* ── Log student selector ── */
+  .log-student-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .log-student-btn {
+    background: var(--white);
+    border: 1.5px solid var(--gray-2);
+    border-radius: 8px;
+    padding: 6px 2px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-dark);
+    transition: all 0.15s;
+  }
+  .log-student-btn.active {
+    background: var(--purple-main);
+    border-color: var(--purple-main);
+    color: var(--white);
+  }
+  .log-student-btn:active { transform: scale(0.94); }
+
+  .no-students-msg {
+    text-align: center;
+    padding: 40px 16px;
+    color: var(--gray-3);
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  /* ── 주차별 랭킹 ── */
+  .weekly-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    padding-bottom: 10px;
+    border-top: 1.5px solid var(--purple-pale);
+    padding-top: 16px;
+  }
+  .week-nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .week-nav-btn {
+    width: 30px; height: 30px;
+    border: 1.5px solid var(--purple-pale);
+    background: var(--white);
+    border-radius: 8px;
+    font-size: 18px;
+    color: var(--purple-main);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+    line-height: 1;
+  }
+  .week-nav-btn:active { background: var(--purple-pale); }
+  .week-label {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--purple-deep);
+    min-width: 110px;
+    text-align: center;
+    letter-spacing: -0.3px;
+  }
+
+  /* ── 쌍방 칭찬 ── */
+  .mutual-item {
+    background: var(--white);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--shadow-sm);
+    border-left: 4px solid var(--purple-light);
+  }
+  .mutual-names {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text-dark);
+    letter-spacing: -0.3px;
+  }
+  .mutual-arrow {
+    color: var(--purple-light);
+    font-size: 13px;
+    font-weight: 700;
+    margin: 0 4px;
+  }
+  .mutual-count {
+    font-size: 12px;
+    color: var(--gray-4);
+    margin-top: 2px;
+    font-weight: 500;
+  }
+  .mutual-badge {
+    background: var(--purple-pale);
+    color: var(--purple-main);
+    font-size: 13px;
+    font-weight: 900;
+    padding: 4px 10px;
+    border-radius: 16px;
+    white-space: nowrap;
+  }
+  .week-badge-this {
+    background: var(--purple-main);
+    color: var(--white);
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 10px;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="app-header">
+  <span class="app-title">칭찬 일름보 찾기</span>
+  <button class="menu-btn" onclick="openSidebar()" aria-label="명단 입력">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<!-- Tab Bar -->
+<nav class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('praise')">칭찬 기록</button>
+  <button class="tab-btn" onclick="switchTab('rank')">칭찬 일름보</button>
+  <button class="tab-btn" onclick="switchTab('fairy')">칭찬 요정</button>
+</nav>
+
+<!-- ── Tab 1: 칭찬 기록 ── -->
+<div id="tab-praise" class="tab-content active">
+  <div id="no-students-praise" class="no-students-msg" style="display:none;">
+    오른쪽 위 메뉴에서<br>학생 명단을 먼저 입력해 주세요.
+  </div>
+
+  <!-- Step 1: 칭찬자 선택 -->
+  <div id="praise-main" style="display:none;">
+    <div class="step-label">STEP 1 · 칭찬하는 사람</div>
+    <div class="student-grid" id="praiser-grid"></div>
+
+    <!-- Step 2: 받는 사람 + 내용 -->
+    <div id="praise-form-area" style="display:none;">
+      <div class="step-label">STEP 2 · 칭찬 받는 사람 &amp; 내용</div>
+      <div class="student-grid" id="receiver-grid"></div>
+      <div class="praise-form" id="praise-detail" style="display:none;">
+        <h3>칭찬 내용 작성</h3>
+        <div class="form-row">
+          <span class="form-label">칭찬자</span>
+          <span class="form-value" id="disp-praiser"></span>
+        </div>
+        <div class="form-row">
+          <span class="form-label">받는 사람</span>
+          <span class="form-value" id="disp-receiver"></span>
+        </div>
+        <textarea class="praise-input" id="praise-text" rows="3" placeholder="칭찬 내용을 입력하세요..."></textarea>
+        <button class="submit-btn" onclick="submitPraise()">기록하기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 기록된 칭찬 로그 -->
+  <div id="log-section" style="display:none; margin-top:20px;">
+    <div class="section-title">칭찬 기록 보기 (학생 선택)</div>
+    <div class="log-student-grid" id="log-student-grid"></div>
+    <div class="log-list" id="log-list"></div>
+  </div>
+</div>
+
+<!-- ── Tab 2: 칭찬 일름보 랭킹 ── -->
+<div id="tab-rank" class="tab-content">
+  <div class="section-title" style="margin-bottom:12px;">칭찬을 많이 한 학생 순위</div>
+  <div class="rank-list" id="rank-list">
+    <div class="empty-state">아직 칭찬 기록이 없습니다.</div>
+  </div>
+  <!-- 쌍방 칭찬 섹션 -->
+  <div id="mutual-section" style="display:none; margin-top:24px;">
+    <div style="border-top:1.5px solid var(--purple-pale); padding-top:16px; margin-bottom:10px;">
+      <div class="section-title">서로 칭찬을 주고받은 사이</div>
+    </div>
+    <div id="mutual-list"></div>
+  </div>
+</div>
+
+<!-- ── Tab 3: 칭찬 요정 랭킹 ── -->
+<div id="tab-fairy" class="tab-content">
+  <div class="section-title" style="margin-bottom:12px;">칭찬을 많이 받은 학생 순위</div>
+  <div class="rank-list" id="fairy-list">
+    <div class="empty-state">아직 칭찬 기록이 없습니다.</div>
+  </div>
+
+  <!-- 주차별 랭킹 -->
+  <div id="weekly-section" style="display:none; margin-top:24px;">
+    <div class="weekly-header">
+      <div class="section-title" style="margin-bottom:0;">주차별 칭찬 요정</div>
+      <div class="week-nav">
+        <button class="week-nav-btn" onclick="changeWeek(-1)">&#8249;</button>
+        <span class="week-label" id="week-label"></span>
+        <button class="week-nav-btn" onclick="changeWeek(1)">&#8250;</button>
+      </div>
+    </div>
+    <div id="weekly-rank-list" class="rank-list" style="margin-top:10px;"></div>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+<div class="sidebar" id="sidebar">
+  <h2>학생 명단 입력</h2>
+  <p class="sidebar-desc">엑셀에서 번호·이름 열을 복사해 붙여넣거나,<br>한 줄에 이름 하나씩 입력하세요.<br><br>예) <code>1 홍길동</code> 또는 <code>홍길동</code></p>
+  <textarea id="student-input" placeholder="1 홍길동&#10;2 김영희&#10;3 이철수&#10;..."></textarea>
+  <button class="sidebar-btn primary" onclick="applyStudents()">명단 적용</button>
+
+  <div class="sidebar-divider"></div>
+
+  <button class="sidebar-btn copy" onclick="copyPraiseData()">칭찬 기록 복사 (번호순)</button>
+  <button class="sidebar-btn danger" onclick="confirmClearAll()">모든 칭찬 기록 삭제</button>
+
+  <button class="sidebar-btn secondary" onclick="closeSidebar()">닫기</button>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3>정말 삭제할까요?</h3>
+    <p>모든 칭찬 기록이 삭제됩니다.<br>이 작업은 되돌릴 수 없습니다.</p>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">취소</button>
+      <button class="modal-confirm" onclick="clearAllData()">삭제</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──
+let students = []; // [{num, name}]
+let praises = []; // [{praiser, receiver, content, date}]
+let selectedPraiser = null;
+let selectedReceiver = null;
+let selectedLogStudent = null;
+let weekOffset = 0;
+
+// ── LocalStorage ──
+function saveData() {
+  localStorage.setItem('cp_students', JSON.stringify(students));
+  localStorage.setItem('cp_praises', JSON.stringify(praises));
+}
+function loadData() {
+  try {
+    students = JSON.parse(localStorage.getItem('cp_students') || '[]');
+    praises = JSON.parse(localStorage.getItem('cp_praises') || '[]');
+  } catch(e) {}
+}
+
+// ── Init ──
+loadData();
+renderAll();
+
+function renderAll() {
+  renderPraiseTab();
+  renderRankTab();
+  renderFairyTab();
+}
+
+// ── Tab switch ──
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['praise','rank','fairy'][i] === tab);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(tab === 'rank') renderRankTab();
+  if(tab === 'fairy') renderFairyTab();
+  if(tab === 'praise') renderPraiseTab();
+}
+
+// ── Praise Tab ──
+function renderPraiseTab() {
+  if(students.length === 0) {
+    document.getElementById('no-students-praise').style.display = 'block';
+    document.getElementById('praise-main').style.display = 'none';
+    document.getElementById('log-section').style.display = 'none';
+    return;
+  }
+  document.getElementById('no-students-praise').style.display = 'none';
+  document.getElementById('praise-main').style.display = 'block';
+
+  // Praiser grid
+  const pg = document.getElementById('praiser-grid');
+  pg.innerHTML = students.map(s => `
+    <button class="student-btn ${selectedPraiser === s.num ? 'selected-praiser' : ''}"
+      onclick="selectPraiser(${s.num})">
+      <span class="num">${s.num}</span>
+      <span class="name">${s.name}</span>
+    </button>
+  `).join('');
+
+  // Receiver grid
+  const rfArea = document.getElementById('praise-form-area');
+  if(selectedPraiser !== null) {
+    rfArea.style.display = 'block';
+    const rg = document.getElementById('receiver-grid');
+    rg.innerHTML = students.filter(s => s.num !== selectedPraiser).map(s => `
+      <button class="student-btn ${selectedReceiver === s.num ? 'selected-receiver' : ''}"
+        onclick="selectReceiver(${s.num})">
+        <span class="num">${s.num}</span>
+        <span class="name">${s.name}</span>
+      </button>
+    `).join('');
+  } else {
+    rfArea.style.display = 'none';
+  }
+
+  // Praise detail form
+  const pd = document.getElementById('praise-detail');
+  if(selectedPraiser !== null && selectedReceiver !== null) {
+    pd.style.display = 'block';
+    const p = students.find(s=>s.num===selectedPraiser);
+    const r = students.find(s=>s.num===selectedReceiver);
+    document.getElementById('disp-praiser').textContent = p ? p.name : '';
+    document.getElementById('disp-receiver').textContent = r ? r.name : '';
+  } else {
+    pd.style.display = 'none';
+  }
+
+  // Log section
+  if(praises.length > 0) {
+    document.getElementById('log-section').style.display = 'block';
+    renderLogStudentGrid();
+    renderLogList();
+  } else {
+    document.getElementById('log-section').style.display = 'none';
+  }
+}
+
+function selectPraiser(num) {
+  if(selectedPraiser === num) {
+    selectedPraiser = null;
+    selectedReceiver = null;
+  } else {
+    selectedPraiser = num;
+    selectedReceiver = null;
+  }
+  renderPraiseTab();
+}
+
+function selectReceiver(num) {
+  selectedReceiver = (selectedReceiver === num) ? null : num;
+  renderPraiseTab();
+}
+
+function submitPraise() {
+  const text = document.getElementById('praise-text').value.trim();
+  if(!text) { showToast('칭찬 내용을 입력해 주세요.'); return; }
+  const p = students.find(s=>s.num===selectedPraiser);
+  const r = students.find(s=>s.num===selectedReceiver);
+  if(!p||!r) return;
+  praises.push({
+    praiser: selectedPraiser,
+    praiserName: p.name,
+    receiver: selectedReceiver,
+    receiverName: r.name,
+    content: text,
+    date: new Date().toLocaleString('ko-KR', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})
+  });
+  saveData();
+  document.getElementById('praise-text').value = '';
+  selectedReceiver = null;
+  showToast('칭찬이 기록되었습니다!');
+  renderAll();
+}
+
+// Log section
+function renderLogStudentGrid() {
+  const grid = document.getElementById('log-student-grid');
+  const praiserNums = [...new Set(praises.map(p=>p.praiser))];
+  const praiserStudents = students.filter(s=>praiserNums.includes(s.num));
+  grid.innerHTML = praiserStudents.map(s => `
+    <button class="log-student-btn ${selectedLogStudent===s.num?'active':''}"
+      onclick="selectLogStudent(${s.num})">${s.name}</button>
+  `).join('');
+}
+
+function selectLogStudent(num) {
+  selectedLogStudent = (selectedLogStudent === num) ? null : num;
+  renderLogStudentGrid();
+  renderLogList();
+}
+
+function renderLogList() {
+  const list = document.getElementById('log-list');
+  let data = praises;
+  if(selectedLogStudent !== null) {
+    data = praises.filter(p=>p.praiser===selectedLogStudent);
+  }
+  if(data.length === 0) {
+    list.innerHTML = selectedLogStudent
+      ? '<div class="empty-state">해당 학생의 칭찬 기록이 없습니다.</div>'
+      : '';
+    return;
+  }
+  list.innerHTML = [...data].reverse().map(p=>`
+    <div class="log-item">
+      <div class="log-meta"><strong>${p.praiserName}</strong> → <strong>${p.receiverName}</strong> 을(를) 칭찬했어요</div>
+      <div class="log-body">${escHtml(p.content)}</div>
+      <div class="log-date">${p.date}</div>
+    </div>
+  `).join('');
+}
+
+// ── Rank Tab ──
+function renderRankTab() {
+  const list = document.getElementById('rank-list');
+  if(praises.length === 0) {
+    list.innerHTML = '<div class="empty-state">아직 칭찬 기록이 없습니다.</div>';
+    return;
+  }
+  const counts = {};
+  praises.forEach(p => { counts[p.praiser] = (counts[p.praiser]||0) + 1; });
+  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  list.innerHTML = sorted.map(([num,cnt],i) => {
+    const s = students.find(s=>s.num===+num);
+    const name = s ? s.name : num+'번';
+    const cls = i===0?'top1':i===1?'top2':i===2?'top3':'';
+    const myPraises = praises.filter(p=>p.praiser===+num);
+    const logsHtml = myPraises.map(p=>`
+      <div class="fairy-log-row">
+        <span style="font-weight:700;color:var(--purple-main);">${p.receiverName}</span>에게 · ${escHtml(p.content)}
+        <div class="fairy-log-by">${p.date}</div>
+      </div>
+    `).join('');
+    const uid = 'rank-'+num;
+    return `<div class="fairy-item">
+      <div class="fairy-header" onclick="toggleFairy('${uid}')">
+        <div class="rank-num ${cls}">${i+1}</div>
+        <div class="rank-info">
+          <div class="rank-name">${name}</div>
+          <div class="rank-count">누가 기록 ${cnt}건</div>
+        </div>
+        <div class="rank-badge">${cnt}회</div>
+      </div>
+      <div class="fairy-logs" id="${uid}">${logsHtml}</div>
+    </div>`;
+  }).join('');
+
+  // 쌍방 칭찬 계산
+  renderMutualSection();
+}
+
+function renderMutualSection() {
+  const section = document.getElementById('mutual-section');
+  const mList = document.getElementById('mutual-list');
+  if(praises.length === 0) { section.style.display='none'; return; }
+
+  // A→B 횟수, B→A 횟수 모두 파악
+  const pairMap = {}; // key: "min_max"
+  praises.forEach(p => {
+    const a = Math.min(p.praiser, p.receiver);
+    const b = Math.max(p.praiser, p.receiver);
+    const key = a + '_' + b;
+    if(!pairMap[key]) pairMap[key] = {a, b, aToB:0, bToA:0};
+    if(p.praiser === a) pairMap[key].aToB++;
+    else pairMap[key].bToA++;
+  });
+
+  // 쌍방인 경우만 (양방향 모두 1회 이상)
+  const mutual = Object.values(pairMap)
+    .filter(p => p.aToB > 0 && p.bToA > 0)
+    .sort((x,y) => (y.aToB+y.bToA) - (x.aToB+x.bToA));
+
+  if(mutual.length === 0) { section.style.display='none'; return; }
+  section.style.display='block';
+
+  mList.innerHTML = mutual.map(pair => {
+    const sA = students.find(s=>s.num===pair.a);
+    const sB = students.find(s=>s.num===pair.b);
+    const nameA = sA ? sA.name : pair.a+'번';
+    const nameB = sB ? sB.name : pair.b+'번';
+    const total = Math.min(pair.aToB, pair.bToA);
+    return `<div class="mutual-item">
+      <div style="flex:1;">
+        <div class="mutual-names">
+          ${nameA} <span class="mutual-arrow">↔</span> ${nameB}
+        </div>
+        <div class="mutual-count">${nameA}→${nameB} ${pair.aToB}회 &nbsp;·&nbsp; ${nameB}→${nameA} ${pair.bToA}회</div>
+      </div>
+      <div class="mutual-badge">총 ${total}회</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Fairy Tab ──
+function getWeekRange(offset) {
+  const now = new Date();
+  const day = now.getDay(); // 0=일
+  const monday = new Date(now);
+  monday.setHours(0,0,0,0);
+  monday.setDate(now.getDate() - ((day + 6) % 7) + offset * 7);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23,59,59,999);
+  return { start: monday, end: sunday };
+}
+
+function formatWeekLabel(offset) {
+  const { start, end } = getWeekRange(offset);
+  const fmt = d => `${d.getMonth()+1}/${d.getDate()}`;
+  const suffix = offset === 0 ? '<span class="week-badge-this">이번 주</span>'
+               : offset === -1 ? '<span style="font-size:11px;color:var(--gray-4);margin-left:4px;">지난 주</span>' : '';
+  return `${fmt(start)} ~ ${fmt(end)}${suffix}`;
+}
+
+// date 문자열 "MM/DD HH:MM" → Date 파싱
+function parsePraiseDate(dateStr) {
+  if(!dateStr) return null;
+  // 형식: "04/25 14:30" (ko-KR toLocaleString month/day hour:min)
+  try {
+    const year = new Date().getFullYear();
+    const [datePart, timePart] = dateStr.trim().split(' ');
+    const [mon, day] = datePart.split('/').map(Number);
+    const [hour, min] = (timePart||'00:00').split(':').map(Number);
+    return new Date(year, mon-1, day, hour, min);
+  } catch(e) { return null; }
+}
+
+function renderFairyTab() {
+  const list = document.getElementById('fairy-list');
+  const weeklySection = document.getElementById('weekly-section');
+
+  if(praises.length === 0) {
+    list.innerHTML = '<div class="empty-state">아직 칭찬 기록이 없습니다.</div>';
+    weeklySection.style.display = 'none';
+    return;
+  }
+
+  // 전체 랭킹
+  const counts = {};
+  praises.forEach(p => { counts[p.receiver] = (counts[p.receiver]||0) + 1; });
+  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+
+  list.innerHTML = sorted.map(([num,cnt],i) => {
+    const s = students.find(s=>s.num===+num);
+    const name = s ? s.name : num+'번';
+    const cls = i===0?'top1':i===1?'top2':i===2?'top3':'';
+    const myPraises = praises.filter(p=>p.receiver===+num);
+    const logsHtml = myPraises.map(p=>`
+      <div class="fairy-log-row">
+        ${escHtml(p.content)}
+        <div class="fairy-log-by">${p.praiserName} · ${p.date}</div>
+      </div>
+    `).join('');
+    const uid = 'fairy-'+num;
+    return `<div class="fairy-item">
+      <div class="fairy-header" onclick="toggleFairy('${uid}')">
+        <div class="rank-num ${cls}">${i+1}</div>
+        <div class="rank-info">
+          <div class="rank-name">${name}</div>
+          <div class="rank-count">칭찬 ${cnt}회 받음</div>
+        </div>
+        <div class="rank-badge">${cnt}회</div>
+      </div>
+      <div class="fairy-logs" id="${uid}">${logsHtml}</div>
+    </div>`;
+  }).join('');
+
+  // 주차별 랭킹
+  weeklySection.style.display = 'block';
+  renderWeeklyRank();
+}
+
+function renderWeeklyRank() {
+  document.getElementById('week-label').innerHTML = formatWeekLabel(weekOffset);
+  const { start, end } = getWeekRange(weekOffset);
+  const weekPraises = praises.filter(p => {
+    const d = parsePraiseDate(p.date);
+    return d && d >= start && d <= end;
+  });
+
+  const wList = document.getElementById('weekly-rank-list');
+  if(weekPraises.length === 0) {
+    wList.innerHTML = '<div class="empty-state" style="padding:20px 0;">해당 주에 칭찬 기록이 없습니다.</div>';
+    return;
+  }
+
+  const counts = {};
+  weekPraises.forEach(p => { counts[p.receiver] = (counts[p.receiver]||0) + 1; });
+  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+
+  wList.innerHTML = sorted.map(([num,cnt],i) => {
+    const s = students.find(s=>s.num===+num);
+    const name = s ? s.name : num+'번';
+    const cls = i===0?'top1':i===1?'top2':i===2?'top3':'';
+    const myPraises = weekPraises.filter(p=>p.receiver===+num);
+    const logsHtml = myPraises.map(p=>`
+      <div class="fairy-log-row">
+        ${escHtml(p.content)}
+        <div class="fairy-log-by">${p.praiserName} · ${p.date}</div>
+      </div>
+    `).join('');
+    const uid = 'wfairy-'+weekOffset+'-'+num;
+    return `<div class="fairy-item">
+      <div class="fairy-header" onclick="toggleFairy('${uid}')">
+        <div class="rank-num ${cls}">${i+1}</div>
+        <div class="rank-info">
+          <div class="rank-name">${name}</div>
+          <div class="rank-count">이 주에 ${cnt}회 받음</div>
+        </div>
+        <div class="rank-badge">${cnt}회</div>
+      </div>
+      <div class="fairy-logs" id="${uid}">${logsHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function changeWeek(dir) {
+  weekOffset += dir;
+  renderWeeklyRank();
+}
+
+function toggleFairy(uid) {
+  const el = document.getElementById(uid);
+  el.classList.toggle('open');
+}
+
+// ── Sidebar ──
+function openSidebar() {
+  document.getElementById('sidebar-overlay').classList.add('open');
+  document.getElementById('sidebar').classList.add('open');
+  // populate textarea with current students
+  if(students.length > 0) {
+    document.getElementById('student-input').value = students.map(s=>s.num+' '+s.name).join('\n');
+  }
+}
+function closeSidebar() {
+  document.getElementById('sidebar-overlay').classList.remove('open');
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+function applyStudents() {
+  const raw = document.getElementById('student-input').value.trim();
+  if(!raw) { showToast('명단을 입력해 주세요.'); return; }
+  const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  const parsed = [];
+  lines.forEach((line, idx) => {
+    // 탭이나 공백으로 분리
+    const parts = line.split(/[\t\s]+/);
+    let num, name;
+    if(parts.length >= 2 && !isNaN(parts[0])) {
+      num = parseInt(parts[0]);
+      name = parts.slice(1).join(' ');
+    } else {
+      num = idx + 1;
+      name = line;
+    }
+    if(name) parsed.push({num, name});
+  });
+  if(parsed.length === 0) { showToast('명단 형식을 확인해 주세요.'); return; }
+  students = parsed;
+  selectedPraiser = null;
+  selectedReceiver = null;
+  selectedLogStudent = null;
+  saveData();
+  closeSidebar();
+  showToast(`학생 ${students.length}명 등록 완료!`);
+  renderAll();
+}
+
+function copyPraiseData() {
+  if(praises.length === 0) { showToast('기록된 칭찬이 없습니다.'); return; }
+  // 번호순 정렬
+  const sorted = [...praises].sort((a,b)=>a.receiver-b.receiver);
+  const text = sorted.map(p =>
+    `${p.receiver}\t${p.receiverName}\t${p.praiserName}\t${p.content}\t${p.date}`
+  ).join('\n');
+  const header = '번호\t이름\t칭찬자\t내용\t날짜\n';
+  navigator.clipboard.writeText(header+text).then(()=>{
+    showToast('복사 완료! 엑셀에 붙여넣으세요.');
+  }).catch(()=>{
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = header+text;
+    document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('복사 완료! 엑셀에 붙여넣으세요.');
+  });
+}
+
+function confirmClearAll() {
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+function clearAllData() {
+  praises = [];
+  selectedPraiser = null;
+  selectedReceiver = null;
+  selectedLogStudent = null;
+  saveData();
+  closeModal();
+  closeSidebar();
+  showToast('모든 기록이 삭제되었습니다.');
+  renderAll();
+}
+
+// ── Util ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
