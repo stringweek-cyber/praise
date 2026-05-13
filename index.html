@@ -251,6 +251,76 @@
     margin-top: 4px;
   }
 
+  /* ── 수정/삭제 버튼 ── */
+  .log-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+    justify-content: flex-end;
+  }
+  .log-action-btn {
+    padding: 0;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: 'Noto Sans KR', sans-serif;
+    border: none;
+    background: none;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    opacity: 0.45;
+  }
+  .log-action-btn:active { opacity: 1; }
+  .log-action-btn.edit { color: var(--purple-deep); }
+  .log-action-btn.delete { color: #D93636; }
+
+  /* ── 인라인 수정 폼 ── */
+  .log-edit-area {
+    margin-top: 8px;
+    display: none;
+  }
+  .log-edit-area.open { display: block; }
+  .log-edit-input {
+    width: 100%;
+    border: 1.5px solid var(--purple-light);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    font-size: 14px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 400;
+    color: var(--text-dark);
+    resize: none;
+    outline: none;
+    background: var(--white);
+    margin-bottom: 6px;
+  }
+  .log-edit-btns {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+  .log-edit-save {
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 800;
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--purple-main);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .log-edit-cancel {
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 800;
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--gray-1);
+    color: var(--gray-4);
+    border: 1.5px solid var(--gray-2);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
   /* ── Ranking ── */
   .rank-list { margin-top: 4px; }
   .rank-item {
@@ -774,8 +844,8 @@
 
 <script>
 // ── State ──
-let students = []; // [{num, name}]
-let praises = []; // [{praiser, receiver, content, date}]
+let students = [];
+let praises = [];
 let selectedPraiser = null;
 let selectedReceiver = null;
 let selectedLogStudent = null;
@@ -826,7 +896,6 @@ function renderPraiseTab() {
   document.getElementById('no-students-praise').style.display = 'none';
   document.getElementById('praise-main').style.display = 'block';
 
-  // Praiser grid
   const pg = document.getElementById('praiser-grid');
   pg.innerHTML = students.map(s => `
     <button class="student-btn ${selectedPraiser === s.num ? 'selected-praiser' : ''}"
@@ -836,7 +905,6 @@ function renderPraiseTab() {
     </button>
   `).join('');
 
-  // Receiver grid
   const rfArea = document.getElementById('praise-form-area');
   if(selectedPraiser !== null) {
     rfArea.style.display = 'block';
@@ -852,7 +920,6 @@ function renderPraiseTab() {
     rfArea.style.display = 'none';
   }
 
-  // Praise detail form
   const pd = document.getElementById('praise-detail');
   if(selectedPraiser !== null && selectedReceiver !== null) {
     pd.style.display = 'block';
@@ -864,7 +931,6 @@ function renderPraiseTab() {
     pd.style.display = 'none';
   }
 
-  // Log section
   if(praises.length > 0) {
     document.getElementById('log-section').style.display = 'block';
     renderLogStudentGrid();
@@ -897,6 +963,7 @@ function submitPraise() {
   const r = students.find(s=>s.num===selectedReceiver);
   if(!p||!r) return;
   praises.push({
+    id: Date.now(),
     praiser: selectedPraiser,
     praiserName: p.name,
     receiver: selectedReceiver,
@@ -911,7 +978,7 @@ function submitPraise() {
   renderAll();
 }
 
-// Log section
+// ── Log section ──
 function renderLogStudentGrid() {
   const grid = document.getElementById('log-student-grid');
   const praiserNums = [...new Set(praises.map(p=>p.praiser))];
@@ -928,6 +995,7 @@ function selectLogStudent(num) {
   renderLogList();
 }
 
+// ── 핀셋수정: renderLogList — 수정/삭제 버튼 추가 ──
 function renderLogList() {
   const list = document.getElementById('log-list');
   let data = praises;
@@ -940,13 +1008,60 @@ function renderLogList() {
       : '';
     return;
   }
-  list.innerHTML = [...data].reverse().map(p=>`
-    <div class="log-item">
+  // 기존 id 없는 레코드에 id 부여 (하위호환)
+  praises.forEach((p,i) => { if(!p.id) p.id = i + 1; });
+
+  list.innerHTML = [...data].reverse().map(p => `
+    <div class="log-item" id="log-item-${p.id}">
       <div class="log-meta"><strong>${p.praiserName}</strong> → <strong>${p.receiverName}</strong> 을(를) 칭찬했어요</div>
-      <div class="log-body">${escHtml(p.content)}</div>
+      <div class="log-body" id="log-body-${p.id}">${escHtml(p.content)}</div>
       <div class="log-date">${p.date}</div>
+      <div class="log-actions">
+        <button class="log-action-btn edit" onclick="startEdit(${p.id})">수정</button>
+        <button class="log-action-btn delete" onclick="deletePraise(${p.id})">삭제</button>
+      </div>
+      <div class="log-edit-area" id="log-edit-${p.id}">
+        <textarea class="log-edit-input" id="log-edit-input-${p.id}" rows="2">${escHtml(p.content)}</textarea>
+        <div class="log-edit-btns">
+          <button class="log-edit-cancel" onclick="cancelEdit(${p.id})">취소</button>
+          <button class="log-edit-save" onclick="saveEdit(${p.id})">저장</button>
+        </div>
+      </div>
     </div>
   `).join('');
+}
+
+// ── 수정 시작 ──
+function startEdit(id) {
+  document.getElementById('log-edit-' + id).classList.add('open');
+  const input = document.getElementById('log-edit-input-' + id);
+  input.focus();
+  input.setSelectionRange(input.value.length, input.value.length);
+}
+
+// ── 수정 취소 ──
+function cancelEdit(id) {
+  document.getElementById('log-edit-' + id).classList.remove('open');
+}
+
+// ── 수정 저장 ──
+function saveEdit(id) {
+  const newText = document.getElementById('log-edit-input-' + id).value.trim();
+  if(!newText) { showToast('내용을 입력해 주세요.'); return; }
+  const idx = praises.findIndex(p => p.id === id);
+  if(idx === -1) return;
+  praises[idx].content = newText;
+  saveData();
+  showToast('수정되었습니다.');
+  renderAll();
+}
+
+// ── 개별 삭제 ──
+function deletePraise(id) {
+  praises = praises.filter(p => p.id !== id);
+  saveData();
+  showToast('삭제되었습니다.');
+  renderAll();
 }
 
 // ── Rank Tab ──
@@ -984,7 +1099,6 @@ function renderRankTab() {
     </div>`;
   }).join('');
 
-  // 쌍방 칭찬 계산
   renderMutualSection();
 }
 
@@ -993,8 +1107,7 @@ function renderMutualSection() {
   const mList = document.getElementById('mutual-list');
   if(praises.length === 0) { section.style.display='none'; return; }
 
-  // A→B 횟수, B→A 횟수 모두 파악
-  const pairMap = {}; // key: "min_max"
+  const pairMap = {};
   praises.forEach(p => {
     const a = Math.min(p.praiser, p.receiver);
     const b = Math.max(p.praiser, p.receiver);
@@ -1004,7 +1117,6 @@ function renderMutualSection() {
     else pairMap[key].bToA++;
   });
 
-  // 쌍방인 경우만 (양방향 모두 1회 이상)
   const mutual = Object.values(pairMap)
     .filter(p => p.aToB > 0 && p.bToA > 0)
     .sort((x,y) => (y.aToB+y.bToA) - (x.aToB+x.bToA));
@@ -1033,7 +1145,7 @@ function renderMutualSection() {
 // ── Fairy Tab ──
 function getWeekRange(offset) {
   const now = new Date();
-  const day = now.getDay(); // 0=일
+  const day = now.getDay();
   const monday = new Date(now);
   monday.setHours(0,0,0,0);
   monday.setDate(now.getDate() - ((day + 6) % 7) + offset * 7);
@@ -1051,10 +1163,8 @@ function formatWeekLabel(offset) {
   return `${fmt(start)} ~ ${fmt(end)}${suffix}`;
 }
 
-// date 문자열 "MM/DD HH:MM" → Date 파싱
 function parsePraiseDate(dateStr) {
   if(!dateStr) return null;
-  // 형식: "04/25 14:30" (ko-KR toLocaleString month/day hour:min)
   try {
     const year = new Date().getFullYear();
     const [datePart, timePart] = dateStr.trim().split(' ');
@@ -1074,7 +1184,6 @@ function renderFairyTab() {
     return;
   }
 
-  // 전체 랭킹
   const counts = {};
   praises.forEach(p => { counts[p.receiver] = (counts[p.receiver]||0) + 1; });
   const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
@@ -1104,7 +1213,6 @@ function renderFairyTab() {
     </div>`;
   }).join('');
 
-  // 주차별 랭킹
   weeklySection.style.display = 'block';
   renderWeeklyRank();
 }
@@ -1167,7 +1275,6 @@ function toggleFairy(uid) {
 function openSidebar() {
   document.getElementById('sidebar-overlay').classList.add('open');
   document.getElementById('sidebar').classList.add('open');
-  // populate textarea with current students
   if(students.length > 0) {
     document.getElementById('student-input').value = students.map(s=>s.num+' '+s.name).join('\n');
   }
@@ -1183,7 +1290,6 @@ function applyStudents() {
   const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
   const parsed = [];
   lines.forEach((line, idx) => {
-    // 탭이나 공백으로 분리
     const parts = line.split(/[\t\s]+/);
     let num, name;
     if(parts.length >= 2 && !isNaN(parts[0])) {
@@ -1208,7 +1314,6 @@ function applyStudents() {
 
 function copyPraiseData() {
   if(praises.length === 0) { showToast('기록된 칭찬이 없습니다.'); return; }
-  // 번호순 정렬
   const sorted = [...praises].sort((a,b)=>a.receiver-b.receiver);
   const text = sorted.map(p =>
     `${p.receiver}\t${p.receiverName}\t${p.praiserName}\t${p.content}\t${p.date}`
@@ -1217,7 +1322,6 @@ function copyPraiseData() {
   navigator.clipboard.writeText(header+text).then(()=>{
     showToast('복사 완료! 엑셀에 붙여넣으세요.');
   }).catch(()=>{
-    // fallback
     const ta = document.createElement('textarea');
     ta.value = header+text;
     document.body.appendChild(ta);
